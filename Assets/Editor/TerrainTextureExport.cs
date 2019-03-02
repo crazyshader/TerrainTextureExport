@@ -60,12 +60,18 @@ public class TerrainTextureExport : EditorWindow
             for (int m = 0; m < texture.mipmapCount; m++)
                 Graphics.CopyTexture(textureList[i], 0, m, textureArray, i, m);
 
-        AssetDatabase.CreateAsset(textureArray, path);
+        var existing = AssetDatabase.LoadAssetAtPath<Texture2DArray>(path);
+        if (existing != null)
+        {
+            EditorUtility.CopySerialized(textureArray, existing);
+        }
+        else
+        {
+            AssetDatabase.CreateAsset(textureArray, path);
+        }
+
         AssetDatabase.ImportAsset(path);
         AssetDatabase.Refresh();
-
-        Object obj = AssetDatabase.LoadAssetAtPath(path, typeof(Object));
-        ProjectWindowUtil.ShowCreatedAsset(obj);
     }
 
     private string GetSelectedPath()
@@ -274,11 +280,17 @@ public class TerrainTextureExport : EditorWindow
 
         indexTex.Apply();
         byte[] bytes = indexTex.EncodeToPNG();
-        File.WriteAllBytes(Path.Combine(absolutePath, "TerrainTexture_Index.png"), bytes);
+        string indexTexturePath = Path.Combine(absolutePath, "TerrainTexture_Index.png");
+        File.WriteAllBytes(indexTexturePath, bytes);
+        AssetDatabase.ImportAsset(indexTexturePath);
 
         blendTex.Apply();
         byte[] blendBytes = blendTex.EncodeToPNG();
-        File.WriteAllBytes(Path.Combine(absolutePath, "TerrainTexture_Control.png"), blendBytes);
+        string controlTexturePath = Path.Combine(absolutePath, "TerrainTexture_Control.png");
+        File.WriteAllBytes(controlTexturePath, blendBytes);
+        AssetDatabase.ImportAsset(controlTexturePath);
+
+        AssetDatabase.Refresh();
     }
  
     private void OnExportTerrainTexture()
